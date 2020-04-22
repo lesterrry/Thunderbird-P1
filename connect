@@ -1,0 +1,18 @@
+#!/bin/bash
+	ret=$(ps | grep [c]at | wc -l)
+	if [ "$ret" -eq 0 ]
+then {
+	nohup cat /dev/ttyUSB0 &
+	echo "cat task added"
+	echo "1" > /conn
+	echo "value changed to $(cat /conn)"
+	sleep 1
+	exit 1
+}
+else 
+{
+	echo "FAULT. Connection already exists."
+	exit 1
+}
+fi;
+

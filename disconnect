@@ -1,0 +1,5 @@
+#!/bin/bash
+killall cat
+echo "cat tasks purged"
+echo "0" > /conn
+echo "value changed to $(cat /conn)"
