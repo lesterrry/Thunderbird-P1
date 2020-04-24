@@ -529,7 +529,7 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
             printer.println(RUS("НОВОЕ СООБЩЕНИЕ"));
             printer.setDefault();
             printer.setCodePage(CODEPAGE_CP866);
-            printer.println(RUS(output));
+            printer.println(RUS(Foutput));
             printer.printBitmap(64, 84, fetch_logo);
             printer.feed(3);
             printer.setDefault();
