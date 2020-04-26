@@ -1,0 +1,16 @@
+#!/bin/bash
+	ret=$(cat /conn)
+	if [ "$ret" -eq 0 ]
+then {
+	echo "FAULT. No active connections."
+	exit 1
+}
+else 
+{
+	echo "Operating..."
+	echo -n "-NNW-"$1"">/dev/ttyUSB0
+	sleep 1
+	exit 1
+}
+fi;
+
