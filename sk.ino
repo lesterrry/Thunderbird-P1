@@ -106,11 +106,13 @@ int x;
 uint32_t timer;
 uint32_t CTtimer;
 uint32_t upt_timer;
+uint32_t WStick;
 bool inMenu = false;
 bool isCounting = false;
 bool isAsleep = false;
 bool inDev;
 bool printed = false;
+bool WSon;
 int duty = 0;
 int menupage = 0;
 
@@ -131,6 +133,15 @@ void setup() {
 
   FastLED.addLeds<WS2811, DATA_PIN, RGB>(leds, NUM_LEDS);
 
+  if (EEPROM.read(1) == 1) {
+    WSon = true;
+  } else {
+    WSon = false;
+    for (int i = 0; i < NUM_LEDS; i++) {
+    leds[i].setRGB(0, 0, 0);
+  }
+  }
+  FastLED.show();
   Serial.begin(9600);
   Serial1.begin(9600);
   printer.begin();
@@ -153,40 +164,15 @@ void setup() {
   lcd.clear();
 
   upt_timer = millis();
+  WStick = millis();
 
   /*
     for (int i = 0 ; i < 24; i++ ) {
     leds[i].setRGB(0, 139, 255);
     }
-  */
-int idex = 0;
-while(true){
 
- int Position = 0;
 
-  for (int i = 0; i < NUM_LEDS * 2; i++)
-  {
-    Position++; // = 0; //Position + Rate;
-    for (int i = 0; i < NUM_LEDS; i+= 2) {
-      leds[i].setRGB(0,
-               ((sin(i + Position) * 127 + 128) / 255)*255,
-               ((sin(i + Position) * 127 + 128) / 255)*255);    
-               FastLED.show();
-    }
-    for (int i = 1; i < NUM_LEDS; i+= 2) {
-
-      leds[i].setRGB(0,0,((sin(i + Position) * 127 + 128) / 255)*255);
-      FastLED.show();
-    }
-
-    FastLED.show();
-    delay(30);
-  }
- 
-  }
-
-  
-   /*for (int i = 0 ; i < NUM_LEDS; i++ ) {
+    for (int i = 0 ; i < NUM_LEDS; i++ ) {
     for (int j = 50 ; j < 100; j++ ) {
       leds[i].setRGB( 0, j, j);
       leds[i + 1].setRGB(0, j - 50, j - 50);
@@ -195,8 +181,8 @@ while(true){
 
 
     }
-   }
-   for (int i = 0 ; i < NUM_LEDS; i++ ) {
+    }
+    for (int i = 0 ; i < NUM_LEDS; i++ ) {
     for (int j = 50 ; j < 100; j++ ) {
       leds[i].setRGB( 0, 0, j);
       leds[i + 1].setRGB(0, 0, j - 50);
@@ -205,7 +191,7 @@ while(true){
 
     }
     }
-    */
+  */
 }
 
 
@@ -223,6 +209,53 @@ void loop() {
       digitalWrite(10, LOW);
       lcd.clear();
       printed = true;
+    }
+    if (millis() - WStick >= 30 && WSon) {
+      int Position = 0;
+
+      for (int i = 0; i < NUM_LEDS * 2; i++)
+      {
+        Position++; // = 0; //Position + Rate;
+        for (int i = 0; i < NUM_LEDS; i += 2) {
+          leds[i].setRGB(0,
+                         ((sin(i + Position) * 127 + 128) / 255) * 255,
+                         ((sin(i + Position) * 127 + 128) / 255) * 255);
+          FastLED.show();
+        }
+        for (int i = 1; i < NUM_LEDS; i += 2) {
+
+          leds[i].setRGB(0, 0, ((sin(i + Position) * 127 + 128) / 255) * 255);
+          FastLED.show();
+        }
+
+        FastLED.show();
+
+      }
+      FastLED.show();
+      WStick = millis();
+    }  if (millis() - WStick >= 30 && WSon) {
+      int Position = 0;
+
+      for (int i = 0; i < NUM_LEDS * 2; i++)
+      {
+        Position++; // = 0; //Position + Rate;
+        for (int i = 0; i < NUM_LEDS; i += 2) {
+          leds[i].setRGB(0,
+                         ((sin(i + Position) * 127 + 128) / 255) * 255,
+                         ((sin(i + Position) * 127 + 128) / 255) * 255);
+          FastLED.show();
+        }
+        for (int i = 1; i < NUM_LEDS; i += 2) {
+
+          leds[i].setRGB(0, 0, ((sin(i + Position) * 127 + 128) / 255) * 255);
+          FastLED.show();
+        }
+
+        FastLED.show();
+
+      }
+      FastLED.show();
+      WStick = millis();
     }
 
   } else if (isCounting == false && menupage == 0) {
@@ -266,6 +299,17 @@ void loop() {
     if (printed == false) {
       digitalWrite(10, HIGH);
       lcd.setCursor(0, 0);
+      lcd.print("WolfSight S1");
+      lcd.setCursor(0, 1);
+      if(WSon)lcd.print("SWITCH OFF<"); else lcd.print("SWITCH ON<");
+      lcd.setCursor(8, 1);
+      printed = true;
+    }
+  }
+  else if (isCounting == false && menupage == 4) {
+    if (printed == false) {
+      digitalWrite(10, HIGH);
+      lcd.setCursor(0, 0);
       if (inDev == false) lcd.print("ENTER DEV MODE?"); else lcd.print("EXIT DEV MODE?");
       lcd.setCursor(0, 1);
       lcd.print("YES<");
@@ -282,7 +326,10 @@ void loop() {
     if (inMenu == false) {
       inMenu = true;
       menupage = 0;
-    } else if (menupage == 0) menupage = 1; else if (menupage == 1) menupage = 2; else if (menupage == 2) menupage = 3; else if (menupage == 3) menupage = 0;
+      while (x < 800 && x > 600) {
+        x = analogRead (0);
+      }
+    } else if (menupage == 0) menupage = 1; else if (menupage == 1) menupage = 2; else if (menupage == 2) menupage = 3; else if (menupage == 3) menupage = 4; else if (menupage == 4) menupage = 0;
     tone(49, 1500);
     delay(50);
     noTone(49);
@@ -317,8 +364,26 @@ void loop() {
 
   }
 
-
   if (x < 600 && x > 60 && inMenu == true && menupage == 3) {
+    if (WSon) {
+      WSon = false;
+      for (int i = 0; i < NUM_LEDS; i++) {
+        leds[i].setRGB(0, 0, 0);
+      }
+      FastLED.show();
+      EEPROM.write(1, 0);
+    }else{
+      WSon = true;
+      EEPROM.write(1, 1);
+    }
+     tone(49, 1500);
+    delay(100);
+    noTone(49);
+    delay(1900);
+    printed = false;
+  }
+
+  if (x < 600 && x > 60 && inMenu == true && menupage == 4) {
     lcd.clear();
     if (inDev == false) {
       lcd.print("DEV MODE ENABLED");
@@ -510,6 +575,9 @@ void loop() {
     lcd.clear();
     printed = false;
   }
+
+
+
 }
 
 
@@ -518,7 +586,7 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
 
   String Foutput;
 
-  if ((Fprinting == 'S' || Fprinting == 'R' || Fprinting == 'M' || Fprinting == 'N' || Fprinting == 'D') && (Fbeeping == 'S' || Fbeeping == 'P' || Fbeeping == 'N') && (Fshowing == 'S' || Fshowing == 'P' || Fshowing == 'M' || Fshowing == 'U'|| Fshowing == 'W' || Fshowing == 'N')) {
+  if ((Fprinting == 'S' || Fprinting == 'R' || Fprinting == 'M' || Fprinting == 'N' || Fprinting == 'D') && (Fbeeping == 'S' || Fbeeping == 'P' || Fbeeping == 'N') && (Fshowing == 'S' || Fshowing == 'P' || Fshowing == 'M' || Fshowing == 'U' || Fshowing == 'W' || Fshowing == 'N')) {
 
     if (Fshowing == 'S' || Fshowing == 'M' || Fshowing == 'P') {
       lcd.clear();
@@ -542,9 +610,7 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
       noTone(49);
     }
     if (Fshowing == 'S' || Fshowing == 'M' || Fshowing == 'P') blink();
-    else if (Fshowing == 'W'){
-      
-    }
+
 
     if (Fdata.length() > 5) {
       for (int i = 5; i < Fdata.length(); i++) {
@@ -553,6 +619,18 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
       if (Fshowing == 'U') {
         uptime = Foutput;
         upt_timer = millis();
+      }    else if (Fshowing == 'W') {
+        if (Foutput == "on") {
+          WSon = true;
+          EEPROM.write(1, 1);
+        } else {
+          EEPROM.write(1, 0);
+          WSon = false;
+          for (int i = 0; i < NUM_LEDS; i++) {
+            leds[i].setRGB( 0, 0, 0);
+            LEDS.show();
+          }
+        }
       }
 
       if (Fprinting != 'N') {
