@@ -5,10 +5,12 @@ then {
 	echo "FAULT. No active connections."
 	exit 1
 }
-else 
+else
 {
 	echo "Operating..."
 	echo -n "-NNW-"$1"">/dev/ttyUSB0
+	echo -n "$1" > /WS
+
 	sleep 1
 	exit 1
 }
