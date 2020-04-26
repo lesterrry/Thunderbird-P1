@@ -1,10 +1,15 @@
-//#include         <SoftwareSerial.h>                   //  Подключаем библиотеку для работы по программной шине UART
+
+#include <FastLED.h>
+//v2.0
+
 #include         <Adafruit_Thermal.h>
 #include         <LiquidCrystal.h>
 #include <EEPROM.h>
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
-
+#define NUM_LEDS 28
+#define DATA_PIN 22
+CRGB leds[NUM_LEDS];
 
 static const uint8_t PROGMEM fetch_logo [] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00,
@@ -124,6 +129,8 @@ void setup() {
   digitalWrite(50, HIGH);
   digitalWrite(10, HIGH);
 
+  FastLED.addLeds<WS2811, DATA_PIN, RGB>(leds, NUM_LEDS);
+
   Serial.begin(9600);
   Serial1.begin(9600);
   printer.begin();
@@ -146,6 +153,59 @@ void setup() {
   lcd.clear();
 
   upt_timer = millis();
+
+  /*
+    for (int i = 0 ; i < 24; i++ ) {
+    leds[i].setRGB(0, 139, 255);
+    }
+  */
+int idex = 0;
+while(true){
+
+ int Position = 0;
+
+  for (int i = 0; i < NUM_LEDS * 2; i++)
+  {
+    Position++; // = 0; //Position + Rate;
+    for (int i = 0; i < NUM_LEDS; i+= 2) {
+      leds[i].setRGB(0,
+               ((sin(i + Position) * 127 + 128) / 255)*255,
+               ((sin(i + Position) * 127 + 128) / 255)*255);    
+               FastLED.show();
+    }
+    for (int i = 1; i < NUM_LEDS; i+= 2) {
+
+      leds[i].setRGB(0,0,((sin(i + Position) * 127 + 128) / 255)*255);
+      FastLED.show();
+    }
+
+    FastLED.show();
+    delay(30);
+  }
+ 
+  }
+
+  
+   /*for (int i = 0 ; i < NUM_LEDS; i++ ) {
+    for (int j = 50 ; j < 100; j++ ) {
+      leds[i].setRGB( 0, j, j);
+      leds[i + 1].setRGB(0, j - 50, j - 50);
+      leds[i + 12].setRGB( 0, j, j);
+      LEDS.show();
+
+
+    }
+   }
+   for (int i = 0 ; i < NUM_LEDS; i++ ) {
+    for (int j = 50 ; j < 100; j++ ) {
+      leds[i].setRGB( 0, 0, j);
+      leds[i + 1].setRGB(0, 0, j - 50);
+      leds[i + 12].setRGB( 0, 0, j);
+      LEDS.show();
+
+    }
+    }
+    */
 }
 
 
@@ -458,7 +518,7 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
 
   String Foutput;
 
-  if ((Fprinting == 'S' || Fprinting == 'R' || Fprinting == 'M' || Fprinting == 'N' || Fprinting == 'D') && (Fbeeping == 'S' || Fbeeping == 'P' || Fbeeping == 'N') && (Fshowing == 'S' || Fshowing == 'P' || Fshowing == 'M' || Fshowing == 'U' || Fshowing == 'N')) {
+  if ((Fprinting == 'S' || Fprinting == 'R' || Fprinting == 'M' || Fprinting == 'N' || Fprinting == 'D') && (Fbeeping == 'S' || Fbeeping == 'P' || Fbeeping == 'N') && (Fshowing == 'S' || Fshowing == 'P' || Fshowing == 'M' || Fshowing == 'U'|| Fshowing == 'W' || Fshowing == 'N')) {
 
     if (Fshowing == 'S' || Fshowing == 'M' || Fshowing == 'P') {
       lcd.clear();
@@ -480,6 +540,10 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
       tone(49, 2019);
       delay(100);
       noTone(49);
+    }
+    if (Fshowing == 'S' || Fshowing == 'M' || Fshowing == 'P') blink();
+    else if (Fshowing == 'W'){
+      
     }
 
     if (Fdata.length() > 5) {
@@ -706,4 +770,43 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
   delay(50);
   lcd.clear();
   printed = false;
+}
+static void blink() {
+  for (int i = 0 ; i < 11; i++ ) {
+    //LEDS.setBrightness(200 * (-4 * (g - 0.5) * (g - 0.5) + 1));
+
+    for (int j = 50 ; j < 100; j++ ) {
+      leds[i].setRGB( 0, j, j);
+      leds[i + 1].setRGB(0, j - 50, j - 50);
+      leds[i + 12].setRGB( 0, j, j);
+      leds[i + 13].setRGB(0, j - 50, j - 50);
+      LEDS.show();
+
+
+    }
+  }
+
+  for (int i = 0 ; i < 14; i++ ) {
+    leds[i].setRGB( 0, 0, 0);
+    leds[i + 11].setRGB( 0, 0, 0);
+    LEDS.show();
+    delay(20);
+  }
+  for (float g = 0.0; g < 1.1; g += 0.1) {
+    for (int i = 24; i < NUM_LEDS; i++) {
+      leds[i].setRGB( g * 255, g * 255, g * 255);
+      LEDS.show();
+      delay(5);
+    }
+  }
+
+  for (float g = 1.0; g > -0.1; g -= 0.1) {
+    for (int i = 24; i < NUM_LEDS; i++) {
+      leds[i].setRGB( g * 255, g * 255, g * 255);
+      LEDS.show();
+      delay(10);
+    }
+
+  }
+
 }
