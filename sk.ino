@@ -1,4 +1,4 @@
-//v2.0
+//v2.1
 #include <FastLED.h>
 #include <Adafruit_Thermal.h>
 #include <LiquidCrystal.h>
@@ -164,6 +164,13 @@ void setup() {
   upt_timer = millis();
   WStick = millis();
 
+//  for (uint16_t i = 0; i < 1000; i += 20){
+//    Serial.println(i);
+//      tone(49, i);
+//      delay(50);
+//      noTone(49);
+//      delay(50);
+//  }
   /*
     for (int i = 0 ; i < 24; i++ ) {
     leds[i].setRGB(0, 139, 255);
@@ -477,10 +484,7 @@ void loop() {
   }
 
   if (Serial.available() > 0) {
-
-
-
-
+    
     data = "";
     printing = "";
     beeping = "";
@@ -584,7 +588,7 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
 
   String Foutput;
 
-  if ((Fprinting == 'S' || Fprinting == 'R' || Fprinting == 'M' || Fprinting == 'N' || Fprinting == 'D') && (Fbeeping == 'S' || Fbeeping == 'P' || Fbeeping == 'N') && (Fshowing == 'S' || Fshowing == 'P' || Fshowing == 'M' || Fshowing == 'U' || Fshowing == 'W' || Fshowing == 'N')) {
+  if ((Fprinting == 'S' || Fprinting == 'R' || Fprinting == 'M' || Fprinting == 'N' || Fprinting == 'D') && (Fbeeping == 'S' || Fbeeping == 'P' || Fbeeping == 'N') && (Fshowing == 'S' || Fshowing == 'P' || Fshowing == 'M' || Fshowing == 'U' || Fshowing == 'W' || Fshowing == 'A' || Fshowing == 'N')) {
 
     if (Fshowing == 'S' || Fshowing == 'M' || Fshowing == 'P') {
       lcd.clear();
@@ -599,16 +603,20 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
     }
 
     if (Fbeeping == 'S') {
-      tone(49, 2019);
+      tone(49, 400);
       delay(100);
       noTone(49);
       delay(100);
-      tone(49, 2019);
+      tone(49, 600);
       delay(100);
       noTone(49);
     }
-    if (Fshowing == 'S' || Fshowing == 'M' || Fshowing == 'P') blink();
-
+    if (Fshowing == 'S' || Fshowing == 'M' || Fshowing == 'P'){ blink(); }
+    else if (Fshowing == 'A'){
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      digitalWrite(10, HIGH);
+    }
 
     if (Fdata.length() > 5) {
       for (int i = 5; i < Fdata.length(); i++) {
@@ -696,12 +704,6 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
             printer.feed(3);
 
           }
-
-
-
-
-
-
         } else {
           lcd.print("FAULT");
           delay(1000);
@@ -758,27 +760,38 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
         delay(100);
       }
 
-      if (Fshowing == 'P') {
+      if (Fshowing == 'P' || Fshowing == 'A') {
+        bool anim = Fshowing == 'A' ? true : false;
+        bool loud = Fbeeping == 'S' ? true : false;
         uint32_t count;
         int pgMax;
         int pg = 0;
+        uint32_t stamp = 0;
         count = millis();
         lcd.clear();
         lcd.setCursor(0, 0);
-
+        if (anim) alertSet();
+        
         if (Foutput.length() <= 32) {
           for (int i = 0; i < Foutput.length(); i++) {
             lcd.print(Foutput[i]);
+            if (anim){
+              if (loud) tone(49,200);
+              delay(30);
+              noTone(49);
+              delay(30);
+            }
             if (i == 15) lcd.setCursor(0, 1);
           }
           x = analogRead (0);
-          while (x > 800) x = analogRead (0);
+          stamp = millis();
+          while (x > 800 && (!anim || millis() < stamp + 10000)) x = analogRead (0);
         }
         else {
           if (Foutput.length() % 32 == 0) pgMax = Foutput.length() / 32 - 1; else pgMax = (Foutput.length() / 32);
           x = analogRead (0);
 
-          while (x > 800) {
+          while (x > 800 && (!anim || !(millis() > stamp + 10000 && stamp != 0))) {
             x = analogRead (0);
 
             if (millis() - count > 2000) {
@@ -789,16 +802,28 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
               if (pg == pgMax && Foutput.length() % 32 != 0) {
                 for (int i = pg * 32; i < Foutput.length(); i++) {
                   lcd.print(Foutput[i]);
+                  if (anim){
+                    if (loud) tone(49,200);
+                    delay(30);
+                    noTone(49);
+                    delay(30);
+                  }
                   if ((i + 1) % 16 == 0 && i != -1) lcd.setCursor(0, 1);
                 }
               } else {
                 for (int i = pg * 32; i < (pg * 32) + 32; i++) {
                   lcd.print(Foutput[i]);
+                  if (anim){
+                    if (loud) tone(49,200);
+                    delay(30);
+                    noTone(49);
+                    delay(30);
+                  }
                   if ((i + 1) % 16 == 0 && i != -1) lcd.setCursor(0, 1);
                 }
               }
 
-              if (pg < pgMax) pg++; else pg = 0;
+              if (pg < pgMax) pg++; else { pg = 0; stamp = millis();}
             }
 
             if (Serial.available() > 0) {
@@ -809,10 +834,10 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
                 perform(printing, beeping, showing, data);
               }
             }
-
           }
           delay(100);
         }
+        if (anim) goDark();
       }
 
     } else {
@@ -847,6 +872,24 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
   lcd.clear();
   printed = false;
 }
+
+static void alertSet(){
+  for (int i = 0; i < 13; i++){
+    leds[i].setRGB(153, 255, 0);
+  }
+  for (int i = 13; i < 24; i++){
+    leds[i].setRGB(0, 255, 0);
+  }
+  LEDS.show();
+}
+
+static void goDark(){
+  for (int i = 0; i < 28; i++){
+    leds[i].setRGB(0, 0, 0);
+  }
+  LEDS.show();
+}
+
 static void blink() {
   for (int i = 0 ; i < 11; i++ ) {
     //LEDS.setBrightness(200 * (-4 * (g - 0.5) * (g - 0.5) + 1));
@@ -857,8 +900,6 @@ static void blink() {
       leds[i + 12].setRGB( 0, j, j);
       leds[i + 13].setRGB(0, j - 50, j - 50);
       LEDS.show();
-
-
     }
   }
 
