@@ -763,6 +763,7 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
       if (Fshowing == 'P' || Fshowing == 'A') {
         bool anim = Fshowing == 'A' ? true : false;
         bool loud = Fbeeping == 'S' ? true : false;
+        bool cycled = false;
         uint32_t count;
         int pgMax;
         int pg = 0;
@@ -823,7 +824,7 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
                 }
               }
 
-              if (pg < pgMax) pg++; else { pg = 0; stamp = millis();}
+              if (pg < pgMax) pg++; else { pg = 0; if (!cycled){ stamp = millis(); cycled = true;}}
             }
 
             if (Serial.available() > 0) {
