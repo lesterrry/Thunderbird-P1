@@ -1,18 +1,27 @@
 #!/bin/bash
-	ret=$(cat /conn)
-	if [ "$ret" -eq 0 ]
+        ret=$(cat /conn)
+        if [ "$ret" -eq 0 ]
 then {
-	echo "FAULT. No active connections."
-	exit 1
+        echo "FAULT. No active connections."
+        exit 1
 }
 else
 {
-	echo "Operating..."
-	echo -n "-NNW-"$1"">/dev/ttyUSB0
-	echo -n "$1" > /WS
-
-	sleep 1
-	exit 1
+        echo "Operating..."
+        echo -n "-NNW-"$1"">/dev/ttyUSB0
+        if [[ $1 = "xon" ]]
+        then
+                echo -n "on" > /WSX
+                echo -n "off" > /WS 
+        elif [[ $1 = "on" ]]
+        then
+                echo -n "on" > /WS
+                echo -n "off" > /WSX
+        else
+                echo -n "off" > /WS
+                echo -n "off" > /WSX
+        fi;
+        sleep 1
+        exit 1
 }
 fi;
-
