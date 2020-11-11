@@ -1,4 +1,4 @@
-//v2.1
+//v2.2
 #include <FastLED.h>
 #include <Adafruit_Thermal.h>
 #include <LiquidCrystal.h>
@@ -110,7 +110,9 @@ bool isCounting = false;
 bool isAsleep = false;
 bool inDev;
 bool printed = false;
-bool WSon;
+bool WSFetch;
+bool WSXmas;
+int WSXmasI = 0;
 int duty = 0;
 int menupage = 0;
 
@@ -132,9 +134,17 @@ void setup() {
   FastLED.addLeds<WS2811, DATA_PIN, RGB>(leds, NUM_LEDS);
 
   if (EEPROM.read(1) == 1) {
-    WSon = true;
+    WSFetch = true;
   } else {
-    WSon = false;
+    WSFetch = false;
+    for (int i = 0; i < NUM_LEDS; i++) {
+    leds[i].setRGB(0, 0, 0);
+  }
+  }
+  if (EEPROM.read(2) == 1) {
+    WSXmas = true;
+  } else {
+    WSXmas = false;
     for (int i = 0; i < NUM_LEDS; i++) {
     leds[i].setRGB(0, 0, 0);
   }
@@ -146,9 +156,7 @@ void setup() {
   lcd.begin(16, 2);
   printer.setCodePage(CODEPAGE_CP866);
   printer.wake();
-
-
-  lcd.print("FETCH");
+  lcd.print("THUNDERBIRD");
   if (EEPROM.read(0) == 1) {
     inDev = true;
     lcd.setCursor(13, 0);
@@ -157,7 +165,14 @@ void setup() {
     inDev = false;
   }
   lcd.setCursor(0, 1);
-  lcd.print("DEVELOPMENT");
+  lcd.print("BY FETCH DEV");
+  tone(49,200);
+  delay(120);
+  tone(49,500);
+  delay(120);
+  tone(49,300);
+  delay(120);
+  noTone(49);
   delay(2000);
   lcd.clear();
 
@@ -215,7 +230,7 @@ void loop() {
       lcd.clear();
       printed = true;
     }
-    if (millis() - WStick >= 30 && WSon) {
+    if (millis() - WStick >= 30 && WSFetch) {
       int Position = 0;
 
       for (int i = 0; i < NUM_LEDS * 2; i++)
@@ -232,13 +247,11 @@ void loop() {
           leds[i].setRGB(0, 0, ((sin(i + Position) * 127 + 128) / 255) * 255);
           FastLED.show();
         }
-
         FastLED.show();
-
       }
       FastLED.show();
       WStick = millis();
-    }  if (millis() - WStick >= 30 && WSon) {
+    }  if (millis() - WStick >= 30 && WSFetch) {
       int Position = 0;
 
       for (int i = 0; i < NUM_LEDS * 2; i++)
@@ -255,9 +268,41 @@ void loop() {
           leds[i].setRGB(0, 0, ((sin(i + Position) * 127 + 128) / 255) * 255);
           FastLED.show();
         }
-
         FastLED.show();
-
+      }
+      FastLED.show();
+      WStick = millis();
+    }
+    else if (millis() - WStick >= 30 && WSXmas) {
+      switch(WSXmasI){
+        case 0:
+          WSXmasI = 1;
+          break;
+         case 1:
+          WSXmasI = 2;
+          break;
+         case 2:
+          WSXmasI = 0;
+          break;
+      }
+      int Position = 0;
+      for (int i = 0; i < NUM_LEDS * 2; i++)
+      {
+        Position++; // = 0; //Position + Rate;
+        for (int i = WSXmasI; i < NUM_LEDS; i += 3) {
+          leds[i].setRGB(((sin(i + Position) * 127 + 128) / 255) * 255, 0, 0);
+          FastLED.show();
+        }
+        for (int i = WSXmasI + 1; i < NUM_LEDS; i += 3) {
+          leds[i].setRGB(0, ((sin(i + Position) * 127 + 128) / 255) * 255, 0);
+          FastLED.show();
+        }
+        for (int i = WSXmasI + 2; i < NUM_LEDS; i += 3) {
+          leds[i].setRGB(0, 0, 0);
+          FastLED.show();
+        }
+        FastLED.show();
+        delay(10);
       }
       FastLED.show();
       WStick = millis();
@@ -280,11 +325,7 @@ void loop() {
     if (printed == false) {
       digitalWrite(10, HIGH);
       lcd.setCursor(0, 0);
-      lcd.print("SILVERWING II");
-      lcd.setCursor(0, 1);
-      lcd.print("PWR I/O<");
-      lcd.setCursor(9, 1);
-      lcd.print(">REBOOT");
+      lcd.print("SILVERWING IV");
       printed = true;
     }
   }
@@ -293,8 +334,6 @@ void loop() {
       digitalWrite(10, HIGH);
       lcd.setCursor(0, 0);
       lcd.print("THUNDERBIRD P1");
-      lcd.setCursor(0, 1);
-      lcd.print("RECALL<");
       lcd.setCursor(8, 1);
       if (isAsleep == false) lcd.print(">SLEEP"); else lcd.print(">WAKE");
       printed = true;
@@ -304,10 +343,11 @@ void loop() {
     if (printed == false) {
       digitalWrite(10, HIGH);
       lcd.setCursor(0, 0);
-      lcd.print("WolfSight S1");
+      lcd.print("Wolfsight Timber");
       lcd.setCursor(0, 1);
-      if(WSon)lcd.print("SWITCH OFF<"); else lcd.print("SWITCH ON<");
+      if(WSFetch)lcd.print("OFF<"); else lcd.print("FETCH<");
       lcd.setCursor(8, 1);
+      if(WSXmas)lcd.print(">OFF"); else lcd.print(">XMAS");
       printed = true;
     }
   }
@@ -342,46 +382,31 @@ void loop() {
     timer = millis();
   }
 
-  if (x < 600 && inMenu == true && menupage == 1) {
-    timer = millis();
-    duty = 1;
-    lcd.clear();
-    lcd.print("PERFORMING...");
-    isCounting = true;
-    lcd.setCursor(0, 1);
-    tone(49, 1500);
-    delay(300);
-    noTone(49);
-    CTtimer = millis();
-  }
-
-  if (x < 600 && x > 60 && inMenu == true && menupage == 2) {
-    if (printing == 'X' || beeping == 'X' || showing == 'X') {
-      lcd.clear();
-      lcd.print("EMPTY BUFFER");
-      tone(49, 1500);
-      delay(100);
-      noTone(49);
-      delay(1900);
-    } else {
-      perform(printing, beeping, showing, data);
-    }
-
-  }
-
   if (x < 600 && x > 60 && inMenu == true && menupage == 3) {
-    if (WSon) {
-      WSon = false;
-      for (int i = 0; i < NUM_LEDS; i++) {
-        leds[i].setRGB(0, 0, 0);
-      }
-      FastLED.show();
+    if (WSFetch || WSXmas) {
+      WSFetch = false;
+      goDark();
       EEPROM.write(1, 0);
     }else{
-      WSon = true;
+      WSFetch = true;
       EEPROM.write(1, 1);
     }
-     tone(49, 1500);
+    tone(49, 1500);
+    delay(100);
+    noTone(49);
+    delay(1900);
+    printed = false;
+  }
+  if (x < 60 && inMenu == true && menupage == 3) {
+    if (WSXmas || WSFetch) {
+      WSXmas = false;
+      goDark();
+      EEPROM.write(2, 0);
+    }else{
+      WSXmas = true;
+      EEPROM.write(2, 1);
+    }
+    tone(49, 1500);
     delay(100);
     noTone(49);
     delay(1900);
@@ -406,19 +431,6 @@ void loop() {
     delay(1900);
     printed = false;
   }
-
-  if (x < 60 && inMenu == true && menupage == 1) {
-    timer = millis();
-    duty = 2;
-    lcd.clear();
-    lcd.print("REBOOTING...");
-    isCounting = true;
-    lcd.setCursor(0, 1);
-    tone(49, 1500);
-    delay(100);
-    noTone(49);
-    CTtimer = millis();
-  }
   if (x < 60 && inMenu == true && menupage == 2) {
     if (isAsleep) {
       lcd.clear();
@@ -438,13 +450,10 @@ void loop() {
     delay(1900);
     printed = false;
   }
-
-
   if ((millis() - timer >= 3000) && inMenu == true && isCounting == false) {
     inMenu = false;
     printed = false;
   }
-
   if (isCounting == true) {
 
     if (millis() - timer >= 1000) {
@@ -465,8 +474,6 @@ void loop() {
         isCounting = false;
         inMenu = false;
         printed = false;
-
-
       } else {
         lcd.clear();
         lcd.print("REBOOTING...");
@@ -563,7 +570,6 @@ void loop() {
       showing = data[3];
       perform(printing, beeping, showing, data);
     } else {
-      Serial.println("!ER4: WRONG DATA BEGIN");
       lcd.clear();
       lcd.setCursor(0, 0);
       digitalWrite(10, HIGH);
@@ -577,12 +583,7 @@ void loop() {
     lcd.clear();
     printed = false;
   }
-
-
-
 }
-
-
 
 static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) {
 
@@ -625,17 +626,23 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
       if (Fshowing == 'U') {
         uptime = Foutput;
         upt_timer = millis();
-      }    else if (Fshowing == 'W') {
+      }    
+      else if (Fshowing == 'W') {
         if (Foutput == "on") {
-          WSon = true;
+          WSFetch = true;
+          WSXmas = false;
           EEPROM.write(1, 1);
+        }
+        else if (Foutput == "xon") {
+          WSXmas = true;
+          WSFetch = false;
+          EEPROM.write(2, 1);
         } else {
           EEPROM.write(1, 0);
-          WSon = false;
-          for (int i = 0; i < NUM_LEDS; i++) {
-            leds[i].setRGB( 0, 0, 0);
-            LEDS.show();
-          }
+          EEPROM.write(2, 0);
+          WSFetch = false;
+          WSXmas = false;
+          goDark();
         }
       }
 
@@ -711,7 +718,6 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
           lcd.setCursor(0, 0);
           digitalWrite(10, HIGH);
           lcd.print("ER3: NO PAPER");
-          Serial.println("!ER3: CHECK PAPER");
           delay(4000);
           printed = false;
         }
@@ -776,12 +782,10 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
         if (Foutput.length() <= 32) {
           for (int i = 0; i < Foutput.length(); i++) {
             lcd.print(Foutput[i]);
-            if (anim){
-              if (loud) tone(49,200);
-              delay(30);
-              noTone(49);
-              delay(30);
-            }
+            if (loud) tone(49,200);
+            delay(30);
+            noTone(49);
+            delay(30);
             if (i == 15) lcd.setCursor(0, 1);
           }
           x = analogRead (0);
@@ -844,7 +848,6 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
     } else {
       lcd.print("FAULT");
       delay(1000);
-      Serial.println("!ER5: NO TEXT PROVIDED");
       lcd.clear();
       lcd.setCursor(0, 0);
       digitalWrite(10, HIGH);
@@ -857,7 +860,6 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
     }
   }
   else {
-    Serial.println("!ER6: CHECK OPERATORS");
     lcd.clear();
     lcd.setCursor(0, 0);
     digitalWrite(10, HIGH);
