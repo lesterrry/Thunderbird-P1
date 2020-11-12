@@ -1,4 +1,4 @@
-//v2.2
+//v2.3
 #include <FastLED.h>
 #include <Adafruit_Thermal.h>
 #include <LiquidCrystal.h>
@@ -454,44 +454,8 @@ void loop() {
     inMenu = false;
     printed = false;
   }
-  if (isCounting == true) {
 
-    if (millis() - timer >= 1000) {
-      lcd.print("-");
-      timer = millis();
-    }
-    else if (millis() - CTtimer >= 16000) {
-
-      if (duty == 1) {
-        lcd.clear();
-        lcd.print("PERFORMING...");
-        digitalWrite(52, LOW);
-        delay(1000);
-        digitalWrite(52, HIGH);
-        lcd.setCursor(0, 1);
-        lcd.print("DONE");
-        delay(3000);
-        isCounting = false;
-        inMenu = false;
-        printed = false;
-      } else {
-        lcd.clear();
-        lcd.print("REBOOTING...");
-        digitalWrite(50, LOW);
-        delay(1000);
-        digitalWrite(50, HIGH);
-        lcd.setCursor(0, 1);
-        lcd.print("DONE");
-        delay(3000);
-        isCounting = false;
-        inMenu = false;
-        printed = false;
-      }
-    }
-  }
-
-  if (Serial.available() > 0) {
-    
+  if (Serial.available() > 0) { 
     data = "";
     printing = "";
     beeping = "";
@@ -621,7 +585,7 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
 
     if (Fdata.length() > 5) {
       for (int i = 5; i < Fdata.length(); i++) {
-        if (Fdata[i] != '_' && Fdata[i] != '/') Foutput += Fdata[i]; else if (Fdata[i] == '/') Foutput += "\r\n"; else Foutput += ' ';
+        if (Fdata[i] != '_' && Fdata[i] != '/') Foutput += Fdata[i]; else if (Fdata[i] == '/') Foutput += "\r\n"; else Foutput += "";
       }
       if (Fshowing == 'U') {
         uptime = Foutput;
@@ -659,7 +623,6 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
 
           if (Fprinting == 'S') {
             printer.println(Foutput);
-
             printer.feed(3);
             lcd.print("OK");
             delay(4000);
@@ -728,8 +691,8 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
         bool shown = true;
         blinker = millis();
         lcd.clear();
-        lcd.setCursor(2, 0);
-        lcd.print("NEW MESSAGE");
+        lcd.setCursor(0, 0);
+        lcd.print(Foutput);
         lcd.setCursor(0, 1);
         lcd.print("PRESS TO SUPRESS");
         x = analogRead (0);
@@ -746,8 +709,8 @@ static void perform(char Fprinting, char Fbeeping, char Fshowing, String Fdata) 
               shown = false;
             } else {
               if (Fbeeping == 'P') tone(49, 2019);
-              lcd.setCursor(2, 0);
-              lcd.print("NEW MESSAGE");
+              lcd.setCursor(0, 0);
+              lcd.print(Foutput);
               lcd.setCursor(0, 1);
               lcd.print("PRESS TO SUPRESS");
               shown = true;
