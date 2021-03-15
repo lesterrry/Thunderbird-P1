@@ -1,8 +1,10 @@
 #!/bin/bash
 text=$*
 text=$(sed 's/–/-/g' <<<$text)
-text=$(sed 's/ / /g' <<<$text)
+text=$(sed 's/[^[:print:]]//g' <<<$text)
+text=$(sed 's/[  ]/ /g' <<<$text)
 text=$(sed 's/[«»]/"/g' <<<$text)
+text=$(sed 's/[^[:alnum:]^[:space:]^[:punct:]]//g' <<<$text)
 ret=$(cat /conn)
 if [ "$ret" -eq 0 ]
 then {
@@ -12,7 +14,8 @@ then {
 else
 {
         echo -n "$text">/dev/ttyUSB0
-        echo "Sent"
+        #echo "Sent"
+        echo $text
         sleep 1
         exit 0
 }
