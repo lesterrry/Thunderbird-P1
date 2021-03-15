@@ -1,16 +1,19 @@
 #!/bin/bash
-	ret=$(cat /conn)
-	if [ "$ret" -eq 0 ]
+text=$*
+text=$(sed 's/–/-/g' <<<$text)
+text=$(sed 's/ / /g' <<<$text)
+text=$(sed 's/[«»]/"/g' <<<$text)
+ret=$(cat /conn)
+if [ "$ret" -eq 0 ]
 then {
-	echo "FAULT. No active connections."
-	exit 1
+        echo "FAULT. No active connections."
+        exit 1
 }
-else 
+else
 {
-	echo "Sending..."
-	echo -n ""$1"">/dev/ttyUSB0
-	sleep 1
-	exit 1
+        echo -n "$text">/dev/ttyUSB0
+        echo "Sent"
+        sleep 1
+        exit 0
 }
 fi;
-
